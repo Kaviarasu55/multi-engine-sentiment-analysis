@@ -1,0 +1,38 @@
+timestamp,text,engine,label,confidence,response_time
+2026-06-17 16:44:56,terrible flight,distilbert,negative,0.87,1.23
+2026-06-17 17:26:30,the flight was delayed 3 hours and staff was rude,tfidf,negative,0.9069,0.0103
+2026-06-17 17:26:32,the flight was delayed 3 hours and staff was rude,distilbert,negative,0.9542,2.0951
+2026-06-17 17:26:33,the flight was delayed 3 hours and staff was rude,groq,negative,,1.0282
+2026-06-17 17:28:44,flight was delayed but the service was too good,tfidf,negative,0.5305,0.0057
+2026-06-17 17:28:44,flight was delayed but the service was too good,distilbert,negative,0.8757,0.3131
+2026-06-17 17:28:45,flight was delayed but the service was too good,groq,neutral,,0.9883
+2026-06-17 17:29:47,flight was delayed but the service was excellent,tfidf,negative,0.4944,0.0027
+2026-06-17 17:29:47,flight was delayed but the service was excellent,distilbert,negative,0.5332,0.2533
+2026-06-17 17:29:48,flight was delayed but the service was excellent,groq,neutral,,0.6392
+2026-06-17 17:36:06,the flight was too good,tfidf,positive,0.6565,0.003
+2026-06-17 17:36:07,the flight was too good,distilbert,negative,0.4581,0.3682
+2026-06-17 17:36:08,the flight was too good,groq,positive,,1.8651
+2026-06-17 17:51:22,flight was bad experience,tfidf,negative,0.7172,0.0
+2026-06-17 17:51:24,flight was bad experience,distilbert,negative,0.9264,1.3091
+2026-06-17 17:51:25,flight was bad experience,groq,negative,N/A,1.0665
+2026-06-18 13:12:56,The flight was bad and uncomfortable,tfidf,negative,0.6888,0.029
+2026-06-18 13:12:58,The flight was bad and uncomfortable,distilbert,negative,0.9325,2.1124
+2026-06-18 13:12:59,The flight was bad and uncomfortable,groq,negative,N/A,1.4748
+2026-06-18 17:30:40,the flight was too bad,tfidf,negative,0.5662,0.0081
+2026-06-18 17:30:41,the flight was too bad,distilbert,negative,0.9661,1.6888
+2026-06-18 17:30:42,the flight was too bad,groq,negative,N/A,1.0243
+2026-06-18 17:34:22,the flight was too bad,tfidf,negative,0.5662,0.0084
+2026-06-18 17:34:23,the flight was too bad,distilbert,negative,0.9661,0.2466
+2026-06-18 17:34:23,the flight was too bad,groq,negative,N/A,0.8392
+2026-06-18 17:34:31,the flight was too good,tfidf,positive,0.6565,0.002
+2026-06-18 17:34:31,the flight was too good,distilbert,positive,0.811,0.3432
+2026-06-18 17:34:31,the flight was too good,groq,positive,N/A,0.5521
+2026-06-18 17:35:07,the flight was delayed but the service was really good,tfidf,negative,0.6734,0.0
+2026-06-18 17:35:08,the flight was delayed but the service was really good,distilbert,negative,0.7344,0.3013
+2026-06-18 17:35:09,the flight was delayed but the service was really good,groq,neutral,N/A,0.8684
+2026-06-18 17:38:56,the flight was delayed but the service was really good,tfidf,negative,0.6734,0.0087
+2026-06-18 17:38:56,the flight was delayed but the service was really good,distilbert,negative,0.7344,0.2795
+2026-06-18 17:38:57,the flight was delayed but the service was really good,groq,neutral,N/A,0.5857
+2026-06-18 17:40:02,the flight was delayed but the service was  excellent,tfidf,negative,0.5627,0.0158
+2026-06-18 17:40:02,the flight was delayed but the service was  excellent,distilbert,positive,0.5179,0.367
+2026-06-18 17:40:03,the flight was delayed but the service was  excellent,groq,neutral,N/A,0.7879

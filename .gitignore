@@ -1,0 +1,17 @@
+# Environment
+venv/
+.env
+
+# Model files (too large for GitHub)
+models/distilbert_finetuned/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pkl
+
+# Logs (optional — include if you want history visible)
+# logs/
+
+# VS Code
+.vscode/
