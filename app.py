@@ -195,6 +195,7 @@ elif page == "Evaluation":
 elif page == "History Dashboard":
     st.title("📋 Prediction History")
     st.caption("All predictions logged across all 3 engines.")
+    st.info("⚠️ Prediction history resets on every app restart — cloud filesystem is temporary by design.")
 
     try:
         df = pd.read_csv('logs/predictions_log.csv')

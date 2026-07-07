@@ -3,8 +3,8 @@ import torch
 import numpy as np
 
 def load_distilbert():
-    tokenizer = DistilBertTokenizer.from_pretrained('models/distilbert_finetuned')
-    model = DistilBertForSequenceClassification.from_pretrained('models/distilbert_finetuned')
+    tokenizer = DistilBertTokenizer.from_pretrained('KaviarasuE/sentiment-distilbert')
+    model = DistilBertForSequenceClassification.from_pretrained('KaviarasuE/sentiment-distilbert')
     model.eval()
     return model, tokenizer
 

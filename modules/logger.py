@@ -3,6 +3,7 @@ import os
 from datetime import datetime
 
 LOG_FILE = 'logs/predictions_log.csv'
+EPHEMERAL_WARNING="⚠️ Note: Prediction history resets on every app restart (cloud filesystem is temporary)."
 
 HEADERS = ['timestamp', 'text', 'engine', 'label', 'confidence', 'response_time']
 
