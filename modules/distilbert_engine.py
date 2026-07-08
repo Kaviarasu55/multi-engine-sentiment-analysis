@@ -1,31 +1,25 @@
-from transformers import DistilBertTokenizer, DistilBertForSequenceClassification
-import torch
+import requests
 import numpy as np
+import os
 
-def load_distilbert():
-    tokenizer = DistilBertTokenizer.from_pretrained('KaviarasuE/sentiment-distilbert')
-    model = DistilBertForSequenceClassification.from_pretrained('KaviarasuE/sentiment-distilbert')
-    model.eval()
-    return model, tokenizer
+HF_API_URL = (
+    "https://api-inference.huggingface.co/models/KaviarasuE/sentiment-distilbert"
+)
+
 
 def predict_distilbert(text, model=None, tokenizer=None):
-    if model is None:
-        model, tokenizer = load_distilbert()
+    response = requests.post(HF_API_URL, json={"inputs": text})
+    result = response.json()
 
-    inputs = tokenizer(
-        text,
-        return_tensors='pt',
-        padding='max_length',
-        truncation=True,
-        max_length=128
+    # HF returns list of label/score dicts
+    scores = {item["label"]: item["score"] for item in result[0]}
+
+    label_map = {"LABEL_0": 0, "LABEL_1": 1, "LABEL_2": 2}
+    predicted_label = max(scores, key=scores.get)
+    confidence = round(scores[predicted_label], 4)
+
+    probs = np.array(
+        [scores.get("LABEL_0", 0), scores.get("LABEL_1", 0), scores.get("LABEL_2", 0)]
     )
 
-    with torch.no_grad():
-        outputs = model(**inputs)
-
-    logits = outputs.logits
-    probabilities = torch.softmax(logits, dim=1).numpy()[0]
-    predicted_label = int(np.argmax(probabilities))
-    confidence = round(float(np.max(probabilities)), 4)
-
-    return predicted_label, confidence, probabilities
+    return label_map[predicted_label], confidence, probs

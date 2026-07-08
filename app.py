@@ -15,19 +15,14 @@ st.set_page_config(page_title="Sentiment Analyzer", layout="wide")
 # Cache models — loaded once, reused every click
 # ──────────────────────────────────────────────
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def get_baseline():
     X_train, X_test, y_train, y_test, le = load_data()
     model, vectorizer = train_baseline(X_train, y_train)
     return model, vectorizer, X_test, y_test, le
 
-@st.cache_resource
-def get_distilbert():
-    model, tokenizer = load_distilbert()
-    return model, tokenizer
-
-baseline_model, vectorizer, X_test, y_test, le = get_baseline()
-distilbert_model, tokenizer = get_distilbert()
+with st.spinner("Loading models , please wait..."):
+ baseline_model, vectorizer, X_test, y_test, le = get_baseline()
 class_names = list(le.classes_)
 
 # ──────────────────────────────────────────────
@@ -65,7 +60,7 @@ if page == "Analyzer":
 
         # ── DistilBERT ──
         start = time.time()
-        d_label, d_conf, d_probs = predict_distilbert(text_input, distilbert_model, tokenizer)
+        d_label, d_conf, d_probs = predict_distilbert(text_input)
         d_time = time.time() - start
         d_name = le.inverse_transform([d_label])[0]
         log_prediction(text_input, 'distilbert', d_name, d_conf, d_time)
