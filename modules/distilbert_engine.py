@@ -2,26 +2,22 @@ from transformers import DistilBertTokenizer, DistilBertForSequenceClassificatio
 import torch
 import numpy as np
 
-_model = None
-_tokenizer = None
+
+def load_distilbert():
+    tokenizer = DistilBertTokenizer.from_pretrained("KaviarasuE/sentiment-distilbert")
+    model = DistilBertForSequenceClassification.from_pretrained(
+        "KaviarasuE/sentiment-distilbert"
+    )
+    model.eval()
+    return model, tokenizer
 
 
-def predict_distilbert(text, model=None, tokenizer=None):
-    global _model, _tokenizer
-    if _model is None:
-        _tokenizer = DistilBertTokenizer.from_pretrained(
-            "KaviarasuE/sentiment-distilbert"
-        )
-        _model = DistilBertForSequenceClassification.from_pretrained(
-            "KaviarasuE/sentiment-distilbert"
-        )
-        _model.eval()
-
-    inputs = _tokenizer(
+def predict_distilbert(text, model, tokenizer):
+    inputs = tokenizer(
         text, return_tensors="pt", padding="max_length", truncation=True, max_length=128
     )
     with torch.no_grad():
-        outputs = _model(**inputs)
+        outputs = model(**inputs)
     logits = outputs.logits
     probabilities = torch.softmax(logits, dim=1).numpy()[0]
     predicted_label = int(np.argmax(probabilities))

@@ -15,24 +15,30 @@ st.set_page_config(page_title="Sentiment Analyzer", layout="wide")
 # Cache models — loaded once, reused every click
 # ──────────────────────────────────────────────
 
+
 @st.cache_resource(show_spinner=False)
 def get_baseline():
     X_train, X_test, y_train, y_test, le = load_data()
     model, vectorizer = train_baseline(X_train, y_train)
     return model, vectorizer, X_test, y_test, le
 
-with st.spinner("Loading models , please wait..."):
- baseline_model, vectorizer, X_test, y_test, le = get_baseline()
+
+@st.cache_resource(show_spinner=False)
+def get_distilbert():
+    model, tokenizer = load_distilbert()
+    return model, tokenizer
+
+
+with st.spinner("Loading models, please wait..."):
+    baseline_model, vectorizer, X_test, y_test, le = get_baseline()
+    distilbert_model, tokenizer = get_distilbert()
 class_names = list(le.classes_)
 
 # ──────────────────────────────────────────────
 # Sidebar navigation
 # ──────────────────────────────────────────────
 
-page = st.sidebar.selectbox(
-    "Navigate",
-    ["Analyzer", "Evaluation", "History Dashboard"]
-)
+page = st.sidebar.selectbox("Navigate", ["Analyzer", "Evaluation", "History Dashboard"])
 
 # ══════════════════════════════════════════════
 # PAGE 1 — ANALYZER
@@ -43,8 +49,11 @@ if page == "Analyzer":
     st.caption("Compare TF-IDF, DistilBERT, and Groq LLM on the same input.")
 
     with st.form("analyzer_form"):
-        text_input = st.text_area("Enter a review or comment", height=120,
-                                   placeholder="e.g. The flight was delayed 3 hours and staff was rude")
+        text_input = st.text_area(
+            "Enter a review or comment",
+            height=120,
+            placeholder="e.g. The flight was delayed 3 hours and staff was rude",
+        )
         analyze_clicked = st.form_submit_button("Analyze", type="primary")
 
     if analyze_clicked and text_input.strip():
@@ -53,23 +62,25 @@ if page == "Analyzer":
 
         # ── TF-IDF ──
         start = time.time()
-        b_label, b_conf, b_probs = predict_baseline(text_input, baseline_model, vectorizer)
+        b_label, b_conf, b_probs = predict_baseline(
+            text_input, baseline_model, vectorizer
+        )
         b_time = time.time() - start
         b_name = le.inverse_transform([b_label])[0]
-        log_prediction(text_input, 'tfidf', b_name, b_conf, b_time)
+        log_prediction(text_input, "tfidf", b_name, b_conf, b_time)
 
         # ── DistilBERT ──
         start = time.time()
         d_label, d_conf, d_probs = predict_distilbert(text_input)
         d_time = time.time() - start
         d_name = le.inverse_transform([d_label])[0]
-        log_prediction(text_input, 'distilbert', d_name, d_conf, d_time)
+        log_prediction(text_input, "distilbert", d_name, d_conf, d_time)
 
         # ── Groq ──
         start = time.time()
         g_name = predict_groq(text_input)
         g_time = time.time() - start
-        log_prediction(text_input, 'groq', g_name, None, g_time)
+        log_prediction(text_input, "groq", g_name, None, g_time)
 
         # ── Display results ──
         with col1:
@@ -116,7 +127,8 @@ if page == "Analyzer":
         top_indices = np.argsort(scores)[-5:][::-1]
         top_words = [
             (feature_names[i], round(float(scores[i]), 3))
-            for i in top_indices if scores[i] > 0
+            for i in top_indices
+            if scores[i] > 0
         ]
 
         if top_words:
@@ -149,8 +161,8 @@ elif page == "Evaluation":
 
     col1, col2, col3 = st.columns(3)
     col1.metric("ROC-AUC", round(roc_b, 4))
-    col2.metric("F1 Weighted", round(report_b['weighted avg']['f1-score'], 4))
-    col3.metric("Accuracy", round(report_b['accuracy'], 4))
+    col2.metric("F1 Weighted", round(report_b["weighted avg"]["f1-score"], 4))
+    col3.metric("Accuracy", round(report_b["accuracy"], 4))
 
     col4, col5 = st.columns(2)
     with col4:
@@ -162,19 +174,19 @@ elif page == "Evaluation":
 
     # ── DistilBERT Evaluation (hardcoded — computed once offline) ──
     st.subheader("Engine 2 — DistilBERT Fine-tuned")
-    st.caption("Evaluated on full 2,928 test samples. Computed offline to avoid wait time.")
+    st.caption(
+        "Evaluated on full 2,928 test samples. Computed offline to avoid wait time."
+    )
 
     col6, col7, col8 = st.columns(3)
     col6.metric("ROC-AUC", 0.9245)
     col7.metric("F1 Weighted", 0.8199)
 
-    tfidf_f1 = round(report_b['weighted avg']['f1-score'], 4)
+    tfidf_f1 = round(report_b["weighted avg"]["f1-score"], 4)
     distilbert_f1 = 0.8199
     diff = round(distilbert_f1 - tfidf_f1, 4)
     col8.metric(
-        "F1 vs TF-IDF",
-        distilbert_f1,
-        delta=f"+{diff}" if diff > 0 else str(diff)
+        "F1 vs TF-IDF", distilbert_f1, delta=f"+{diff}" if diff > 0 else str(diff)
     )
 
     st.info(
@@ -190,25 +202,27 @@ elif page == "Evaluation":
 elif page == "History Dashboard":
     st.title("📋 Prediction History")
     st.caption("All predictions logged across all 3 engines.")
-    st.info("⚠️ Prediction history resets on every app restart — cloud filesystem is temporary by design.")
+    st.info(
+        "⚠️ Prediction history resets on every app restart — cloud filesystem is temporary by design."
+    )
 
     try:
-        df = pd.read_csv('logs/predictions_log.csv')
+        df = pd.read_csv("logs/predictions_log.csv")
 
         # ── Summary metrics ──
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Total Predictions", len(df))
 
-        counts = df['label'].value_counts(normalize=True) * 100
+        counts = df["label"].value_counts(normalize=True) * 100
         col2.metric("Positive %", f"{counts.get('positive', 0):.1f}%")
         col3.metric("Negative %", f"{counts.get('negative', 0):.1f}%")
-        col4.metric("Neutral %",  f"{counts.get('neutral', 0):.1f}%")
+        col4.metric("Neutral %", f"{counts.get('neutral', 0):.1f}%")
 
         st.divider()
 
         # ── Engine breakdown ──
         st.subheader("Predictions by Engine")
-        engine_counts = df['engine'].value_counts()
+        engine_counts = df["engine"].value_counts()
         st.bar_chart(engine_counts)
 
         st.divider()
@@ -216,9 +230,11 @@ elif page == "History Dashboard":
         # ── Recent predictions table ──
         st.subheader("Recent Predictions")
         st.dataframe(
-            df.tail(20).iloc[::-1].reset_index(drop=True).fillna('N/A'),
-            use_container_width=True
+            df.tail(20).iloc[::-1].reset_index(drop=True).fillna("N/A"),
+            use_container_width=True,
         )
 
     except FileNotFoundError:
-        st.info("No predictions yet. Go to the Analyzer page and run some predictions first.")
+        st.info(
+            "No predictions yet. Go to the Analyzer page and run some predictions first."
+        )
