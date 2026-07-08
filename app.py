@@ -4,16 +4,12 @@ import numpy as np
 import time
 from modules.preprocess import load_data
 from modules.baseline import train_baseline, predict_baseline
-from modules.distilbert_engine import predict_distilbert
+from modules.distilbert_engine import load_distilbert, predict_distilbert
 from modules.groq_engine import predict_groq
 from modules.evaluator import evaluate_model, plot_confusion_matrix, plot_roc_auc
 from modules.logger import log_prediction
 
 st.set_page_config(page_title="Sentiment Analyzer", layout="wide")
-
-# ──────────────────────────────────────────────
-# Cache models — loaded once, reused every click
-# ──────────────────────────────────────────────
 
 
 @st.cache_resource(show_spinner=False)
@@ -32,17 +28,16 @@ def get_distilbert():
 with st.spinner("Loading models, please wait..."):
     baseline_model, vectorizer, X_test, y_test, le = get_baseline()
     distilbert_model, tokenizer = get_distilbert()
+
 class_names = list(le.classes_)
 
-# ──────────────────────────────────────────────
-# Sidebar navigation
-# ──────────────────────────────────────────────
+# ── Initialize session state ──
+if "results" not in st.session_state:
+    st.session_state.results = None
+if "last_input" not in st.session_state:
+    st.session_state.last_input = ""
 
 page = st.sidebar.selectbox("Navigate", ["Analyzer", "Evaluation", "History Dashboard"])
-
-# ══════════════════════════════════════════════
-# PAGE 1 — ANALYZER
-# ══════════════════════════════════════════════
 
 if page == "Analyzer":
     st.title("🎯 Sentiment Analyzer")
@@ -57,9 +52,6 @@ if page == "Analyzer":
         analyze_clicked = st.form_submit_button("Analyze", type="primary")
 
     if analyze_clicked and text_input.strip():
-
-        col1, col2, col3 = st.columns(3)
-
         # ── TF-IDF ──
         start = time.time()
         b_label, b_conf, b_probs = predict_baseline(
@@ -71,7 +63,9 @@ if page == "Analyzer":
 
         # ── DistilBERT ──
         start = time.time()
-        d_label, d_conf, d_probs = predict_distilbert(text_input)
+        d_label, d_conf, d_probs = predict_distilbert(
+            text_input, distilbert_model, tokenizer
+        )
         d_time = time.time() - start
         d_name = le.inverse_transform([d_label])[0]
         log_prediction(text_input, "distilbert", d_name, d_conf, d_time)
@@ -82,47 +76,65 @@ if page == "Analyzer":
         g_time = time.time() - start
         log_prediction(text_input, "groq", g_name, None, g_time)
 
-        # ── Display results ──
+        # ── Save to session state ──
+        st.session_state.results = {
+            "text": text_input,
+            "b_name": b_name,
+            "b_conf": b_conf,
+            "b_time": b_time,
+            "b_label": b_label,
+            "d_name": d_name,
+            "d_conf": d_conf,
+            "d_time": d_time,
+            "d_probs": d_probs,
+            "g_name": g_name,
+            "g_time": g_time,
+        }
+
+    # ── Display results from session state ──
+    if st.session_state.results:
+        r = st.session_state.results
+
+        col1, col2, col3 = st.columns(3)
+
         with col1:
             st.subheader("Engine 1 — TF-IDF")
-            st.metric("Sentiment", b_name.upper())
-            st.metric("Confidence", f"{b_conf * 100:.1f}%")
-            st.metric("Response Time", f"{b_time:.3f}s")
+            st.metric("Sentiment", r["b_name"].upper())
+            st.metric("Confidence", f"{r['b_conf'] * 100:.1f}%")
+            st.metric("Response Time", f"{r['b_time']:.3f}s")
 
         with col2:
             st.subheader("Engine 2 — DistilBERT")
-            st.metric("Sentiment", d_name.upper())
-            st.metric("Confidence", f"{d_conf * 100:.1f}%")
-            st.metric("Response Time", f"{d_time:.3f}s")
+            st.metric("Sentiment", r["d_name"].upper())
+            st.metric("Confidence", f"{r['d_conf'] * 100:.1f}%")
+            st.metric("Response Time", f"{r['d_time']:.3f}s")
 
         with col3:
             st.subheader("Engine 3 — Groq LLM")
-            st.metric("Sentiment", g_name.upper())
+            st.metric("Sentiment", r["g_name"].upper())
             st.metric("Confidence", "N/A")
-            st.metric("Response Time", f"{g_time:.3f}s")
+            st.metric("Response Time", f"{r['g_time']:.3f}s")
             st.caption("⚠️ Groq doesn't expose internal probabilities — label only.")
 
-        # ── Agreement analysis ──
         st.divider()
-        all_labels = [b_name, d_name, g_name]
+        all_labels = [r["b_name"], r["d_name"], r["g_name"]]
         if len(set(all_labels)) == 1:
-            st.success(f"✅ All 3 engines agree — **{b_name.upper()}**")
+            st.success(f"✅ All 3 engines agree — **{r['b_name'].upper()}**")
         else:
             st.warning(
                 f"⚠️ Engines disagree — "
-                f"TF-IDF: **{b_name}** | "
-                f"DistilBERT: **{d_name}** | "
-                f"Groq: **{g_name}**"
+                f"TF-IDF: **{r['b_name']}** | "
+                f"DistilBERT: **{r['d_name']}** | "
+                f"Groq: **{r['g_name']}**"
             )
 
-        # ── TF-IDF Explainability ──
         st.divider()
         st.subheader("🔍 TF-IDF Explainability")
         st.caption("Top words that contributed to TF-IDF's prediction.")
 
         feature_names = vectorizer.get_feature_names_out()
-        coefs = baseline_model.coef_[b_label]
-        text_tfidf = vectorizer.transform([text_input]).toarray()[0]
+        coefs = baseline_model.coef_[r["b_label"]]
+        text_tfidf = vectorizer.transform([r["text"]]).toarray()[0]
         scores = coefs * text_tfidf
         top_indices = np.argsort(scores)[-5:][::-1]
         top_words = [
@@ -137,15 +149,10 @@ if page == "Analyzer":
         else:
             st.write("No strong contributing words found for this input.")
 
-# ══════════════════════════════════════════════
-# PAGE 2 — EVALUATION
-# ══════════════════════════════════════════════
-
 elif page == "Evaluation":
     st.title("📊 Model Evaluation")
     st.caption("ROC-AUC, F1-score, and Confusion Matrix for TF-IDF vs DistilBERT.")
 
-    # ── TF-IDF Evaluation ──
     st.subheader("Engine 1 — TF-IDF Baseline")
 
     with st.spinner("Running TF-IDF predictions on test set..."):
@@ -172,7 +179,6 @@ elif page == "Evaluation":
 
     st.divider()
 
-    # ── DistilBERT Evaluation (hardcoded — computed once offline) ──
     st.subheader("Engine 2 — DistilBERT Fine-tuned")
     st.caption(
         "Evaluated on full 2,928 test samples. Computed offline to avoid wait time."
@@ -195,10 +201,6 @@ elif page == "Evaluation":
         "Result: F1 0.8199 vs TF-IDF 0.7767 — a clear transformer advantage."
     )
 
-# ══════════════════════════════════════════════
-# PAGE 3 — HISTORY DASHBOARD
-# ══════════════════════════════════════════════
-
 elif page == "History Dashboard":
     st.title("📋 Prediction History")
     st.caption("All predictions logged across all 3 engines.")
@@ -209,7 +211,6 @@ elif page == "History Dashboard":
     try:
         df = pd.read_csv("logs/predictions_log.csv")
 
-        # ── Summary metrics ──
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Total Predictions", len(df))
 
@@ -220,14 +221,12 @@ elif page == "History Dashboard":
 
         st.divider()
 
-        # ── Engine breakdown ──
         st.subheader("Predictions by Engine")
         engine_counts = df["engine"].value_counts()
         st.bar_chart(engine_counts)
 
         st.divider()
 
-        # ── Recent predictions table ──
         st.subheader("Recent Predictions")
         st.dataframe(
             df.tail(20).iloc[::-1].reset_index(drop=True).fillna("N/A"),
