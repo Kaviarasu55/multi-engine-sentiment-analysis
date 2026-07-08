@@ -4,7 +4,7 @@ import numpy as np
 import time
 from modules.preprocess import load_data
 from modules.baseline import train_baseline, predict_baseline
-from modules.distilbert_engine import load_distilbert, predict_distilbert
+from modules.distilbert_engine import predict_distilbert
 from modules.groq_engine import predict_groq
 from modules.evaluator import evaluate_model, plot_confusion_matrix, plot_roc_auc
 from modules.logger import log_prediction
