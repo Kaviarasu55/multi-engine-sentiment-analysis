@@ -1,6 +1,7 @@
 import requests
 import numpy as np
 import time
+import os
 
 HF_API_URL = (
     "https://api-inference.huggingface.co/models/KaviarasuE/sentiment-distilbert"
@@ -8,6 +9,7 @@ HF_API_URL = (
 
 
 def predict_distilbert(text, model=None, tokenizer=None):
+    headers={"Authorization": f"Bearer{os.getenv('HF_TOKEN')}"}
     for attempt in range(3):
         response = requests.post(HF_API_URL, json={"inputs": text})
         result = response.json()
