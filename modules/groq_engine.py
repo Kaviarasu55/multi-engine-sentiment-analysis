@@ -4,8 +4,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
-
 SYSTEM_PROMPT = """
 You are an expert sentiment classification model.
 
@@ -62,6 +60,8 @@ negative
 
 
 def predict_groq(text):
+    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
     response = client.chat.completions.create(
         model="openai/gpt-oss-120b",
         temperature=0,
@@ -73,9 +73,6 @@ def predict_groq(text):
     )
 
     raw_output = response.choices[0].message.content.strip().lower()
-
-    from pprint import pprint
-    pprint(response.model_dump())
 
     if "positive" in raw_output:
         return "positive"
