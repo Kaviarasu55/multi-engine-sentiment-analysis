@@ -17,3 +17,6 @@ timestamp,text,engine,label,confidence,response_time
 2026-07-07 21:24:44,This was the worst flight I've ever taken. I won't fly with this airline again.,tfidf,negative,0.7766,0.0
 2026-07-07 21:24:44,This was the worst flight I've ever taken. I won't fly with this airline again.,distilbert,negative,0.9768,0.4277
 2026-07-07 21:24:45,This was the worst flight I've ever taken. I won't fly with this airline again.,groq,negative,N/A,0.6861
+2026-07-09 10:26:37,the flight delayed and staff was rude,tfidf,negative,0.8933,0.0
+2026-07-09 10:26:40,the flight delayed and staff was rude,distilbert,negative,0.9834,2.403
+2026-07-09 10:26:41,the flight delayed and staff was rude,groq,negative,N/A,0.907
